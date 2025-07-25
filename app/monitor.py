@@ -11,7 +11,6 @@ class SystemMonitor:
         """Initialize system monitor with Redis client"""
         self.redis_client = RedisClient()
         self.start_time = time.time()
-    
     def get_cpu_info(self) -> Dict:
         """
         Get CPU usage information
