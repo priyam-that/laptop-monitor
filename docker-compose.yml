@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: laptop-monitor-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  web:
+    build: .
+    container_name: laptop-monitor-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - FLASK_ENV=production
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+    privileged: true
+    pid: host
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  redis_data:
+    driver: local
